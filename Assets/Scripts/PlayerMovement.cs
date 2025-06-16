@@ -17,6 +17,8 @@ public class PlayerMovement : MonoBehaviour
 
     private float lastYVelocity;
 
+    public float swingSpeed;
+
 
     public TMP_Text speedText;
 
@@ -77,6 +79,7 @@ public class PlayerMovement : MonoBehaviour
     public enum MovementState
     {
         freeze,
+        swinging,
         unlimited,
         walking,
         sprinting,
@@ -93,6 +96,8 @@ public class PlayerMovement : MonoBehaviour
 
     public bool freeze;
     public bool activeGrapple;
+
+    public bool swinging;
     public bool unlimited;
 
     public bool restricted;
@@ -228,6 +233,12 @@ public class PlayerMovement : MonoBehaviour
             else
                 desiredMoveSpeed = sprintSpeed;
         }
+        // Mode - swinging
+        else if (swinging)
+        {
+            state = MovementState.swinging;
+            moveSpeed = swingSpeed;
+        }
 
 
         //Mode - crouching
@@ -324,6 +335,8 @@ public class PlayerMovement : MonoBehaviour
     private void MovePlayer()
     {
         if (activeGrapple) return;
+
+        if (swinging) return;
 
         if (climbingScript.exitingWall) return;
         // Calculate movement direction

@@ -6,7 +6,7 @@ public class GrapplingRope : MonoBehaviour {
     private Spring spring;
     private LineRenderer lr;
     private Vector3 currentGrapplePosition;
-    public GrapplingGun grapplingGun;
+    public PrimaryGrapple grapplingGun;
     public int quality;
     public float damper;
     public float strength;
