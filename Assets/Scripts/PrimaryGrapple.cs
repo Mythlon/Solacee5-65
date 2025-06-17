@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.PlasticSCM.Editor.WebApi;
 using UnityEngine;
 
 public class PrimaryGrapple : MonoBehaviour
@@ -30,7 +31,11 @@ public class PrimaryGrapple : MonoBehaviour
     public float predictionSphereCastRadius;
     public Transform predictionPoint;
 
-    void Update()
+    [Header("Rope Shortening")]
+    public float shrinkSpeed = 5f;
+    public float minClamp = 2f;  
+
+    private void Update()
     {
         if (Input.GetKeyDown(swingKey)) StartSwing();
         if (Input.GetKeyUp(swingKey)) StopSwing();
@@ -40,29 +45,35 @@ public class PrimaryGrapple : MonoBehaviour
 
     void StartSwing()
     {
-        GetComponent<Grappling>().StopGrapple();
+        // return if predictionHit not found
+        if (predictionHit.point == Vector3.zero) return;
+
+        // deactivate active grapple
+        if (GetComponent<Grappling>() != null)
+            GetComponent<Grappling>().StopGrapple();
         pm.ResetRestrictions();
+
         pm.swinging = true;
 
-        RaycastHit hit;
-        if (Physics.Raycast(cam.position, cam.forward, out hit, maxSwingDistance, whatIsGrappable))
-        {
-            swingPoint = hit.point;
-            joint = player.gameObject.AddComponent<SpringJoint>();
-            joint.autoConfigureConnectedAnchor = false;
-            joint.connectedAnchor = swingPoint;
+        swingPoint = predictionHit.point;
+        joint = player.gameObject.AddComponent<SpringJoint>();
+        joint.autoConfigureConnectedAnchor = false;
+        joint.connectedAnchor = swingPoint;
 
-            float distanceFromPoint = Vector3.Distance(player.position, swingPoint);
+        float distanceFromPoint = Vector3.Distance(player.position, swingPoint);
 
-            //The distance grapple will try to keep from grapple point. 
-            joint.maxDistance = distanceFromPoint * 0.8f;
-            joint.minDistance = distanceFromPoint * 0.25f;
+        // the distance grapple will try to keep from grapple point. 
+        joint.maxDistance = distanceFromPoint * 0.8f;
+        joint.minDistance = distanceFromPoint * 0.25f;
 
-            //Adjust these values to fit your game.
-            joint.spring = 4.5f;
-            joint.damper = 7f;
-            joint.massScale = 4.5f;
-        }
+        // customize values as you like
+        joint.spring = 4.5f;
+        joint.damper = 7f;
+        joint.massScale = 4.5f;
+
+        lr.positionCount = 2;
+        currentGrapplePosition = gunTip.position;
+
     }
 
     private void OdmGearMovement()
@@ -79,12 +90,14 @@ public class PrimaryGrapple : MonoBehaviour
         if (Input.GetKey(KeyCode.Space))
         {
             Vector3 directionToPoint = swingPoint - transform.position;
-            rb.AddForce(directionToPoint.normalized * forwardThrustForce * Time.deltaTime);
+    
+            // Optional very small pull force to feel more natural
+            rb.AddForce(directionToPoint.normalized * (forwardThrustForce * 0.1f) * Time.deltaTime);
 
-            float distanceFromPoint = Vector3.Distance(transform.position, swingPoint);
+            // Controlled rope shrinking
+            joint.maxDistance = Mathf.Max(joint.maxDistance - shrinkSpeed * Time.deltaTime, minClamp);
+            joint.minDistance = joint.maxDistance * 0.25f;
 
-            joint.maxDistance = distanceFromPoint * 0.8f;
-            joint.minDistance = distanceFromPoint * 0.25f;
         }
         // extend cable
         if (Input.GetKey(KeyCode.S))
@@ -94,18 +107,22 @@ public class PrimaryGrapple : MonoBehaviour
             joint.maxDistance = extendedDistanceFromPoint * 0.8f;
             joint.minDistance = extendedDistanceFromPoint * 0.25f;
         }
-    }    
+    }
 
+    private void LateUpdate()
+    {
+        DrawRope();
+    }
     private void CheckForSwingPoints()
     {
         if (joint != null) return;
 
         RaycastHit sphereCastHit;
-        Physics.SphereCast(cam.position, predictionSphereCastRadius, cam.forward, 
+        Physics.SphereCast(cam.position, predictionSphereCastRadius, cam.forward,
                             out sphereCastHit, maxSwingDistance, whatIsGrappable);
 
         RaycastHit raycastHit;
-        Physics.Raycast(cam.position, cam.forward, 
+        Physics.Raycast(cam.position, cam.forward,
                             out raycastHit, maxSwingDistance, whatIsGrappable);
 
         Vector3 realHitPoint;
@@ -143,12 +160,28 @@ public class PrimaryGrapple : MonoBehaviour
         lr.positionCount = 0;
         Destroy(joint);
     }
-    public bool IsGrappling() {
+    public bool IsGrappling()
+    {
         return joint != null;
     }
 
-    public Vector3 GetGrapplePoint() {
+    public Vector3 GetGrapplePoint()
+    {
         return swingPoint;
+    }
+    
+    private Vector3 currentGrapplePosition;
+
+    private void DrawRope()
+    {
+        // if not grappling, don't draw rope
+        if (!joint) return;
+
+        currentGrapplePosition = 
+            Vector3.Lerp(currentGrapplePosition, swingPoint, Time.deltaTime * 8f);
+
+        lr.SetPosition(0, gunTip.position);
+        lr.SetPosition(1, currentGrapplePosition);
     }
 
 }

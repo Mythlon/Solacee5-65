@@ -237,7 +237,6 @@ public class PlayerMovement : MonoBehaviour
         else if (swinging)
         {
             state = MovementState.swinging;
-            moveSpeed = swingSpeed;
         }
 
 
@@ -437,13 +436,12 @@ public class PlayerMovement : MonoBehaviour
     {
         enableMovementOnNextTouch = true;
         rb.velocity = velocityToSet;
-        cam.DoFov(grappleFov);
     }
 
     public void ResetRestrictions()
     {
         activeGrapple = false; 
-        cam.DoFov(85f);  
+
     }
 
     private void OnCollisionEnter(Collision collision)
