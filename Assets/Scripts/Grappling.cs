@@ -12,11 +12,22 @@ public class Grappling : MonoBehaviour
 
     public LineRenderer lr;
 
+    private Vector3 currentGrapplePosition;
+
+    private LineRenderer lineRenderer;
+
+
+
     [Header("Grappling")]
     public float maxGrappleDistance;
     public float grappleDelayTime;
     public float OvershootYAxis;
     private Vector3 grapplePoint;
+
+    [Header("Prediction")]
+    public Transform predictionPoint;
+    public float predictionSphereCastRadius = 1.0f;
+    private RaycastHit predictionHit;
 
 
     [Header("Cooldown")]
@@ -30,6 +41,7 @@ public class Grappling : MonoBehaviour
     private void Start()
     {
         pm = GetComponent<PlayerMovement>();
+        lineRenderer = GetComponent<LineRenderer>();
     }
 
     private void Update()
@@ -37,6 +49,9 @@ public class Grappling : MonoBehaviour
         if (Input.GetKeyDown(grappleKey)) StartGrapple();
         if (grapplingCdTimer > 0)
             grapplingCdTimer -= Time.deltaTime;
+
+        CheckForGrapplePoint();
+        UpdateGrappleRope();
 
     }
 
@@ -60,10 +75,10 @@ public class Grappling : MonoBehaviour
 
         pm.freeze = true;
 
-        RaycastHit hit;
-        if (Physics.Raycast(cam.position, cam.forward, out hit, maxGrappleDistance, whatIsGrappable))
+        if (predictionHit.point != Vector3.zero)
         {
-            grapplePoint = hit.point;
+            grapplePoint = predictionHit.point;
+            currentGrapplePosition = gunTip.position;
 
             Invoke(nameof(ExecuteGrapple), grappleDelayTime);
         }
@@ -103,6 +118,58 @@ public class Grappling : MonoBehaviour
         grapplingCdTimer = grapplingCd;
 
         lr.enabled = false;
+
+        currentGrapplePosition = Vector3.zero;
     }
+
+    private void CheckForGrapplePoint()
+    {
+        RaycastHit sphereCastHit;
+        Physics.SphereCast(cam.position, predictionSphereCastRadius, cam.forward,
+                        out sphereCastHit, maxGrappleDistance, whatIsGrappable);
+
+        RaycastHit raycastHit;
+        Physics.Raycast(cam.position, cam.forward,
+                        out raycastHit, maxGrappleDistance, whatIsGrappable);
+
+        Vector3 realHitPoint;
+
+        if (raycastHit.point != Vector3.zero)
+            realHitPoint = raycastHit.point;
+        else if (sphereCastHit.point != Vector3.zero)
+            realHitPoint = sphereCastHit.point;
+        else
+            realHitPoint = Vector3.zero;
+
+        if (realHitPoint != Vector3.zero)
+        {
+            predictionPoint.gameObject.SetActive(true);
+            predictionPoint.position = realHitPoint;
+        }
+        else
+        {
+            predictionPoint.gameObject.SetActive(false);
+        }
+
+        predictionHit = raycastHit.point == Vector3.zero ? sphereCastHit : raycastHit;
+    }
+    
+    private void UpdateGrappleRope()
+{
+    if (!grappling)
+    {
+        lineRenderer.enabled = false;
+        return;
+    }
+
+    lineRenderer.enabled = true;
+
+    // Плавное приближение троса к точке захвата
+    currentGrapplePosition = Vector3.Lerp(currentGrapplePosition, grapplePoint, Time.deltaTime * 20f);
+    lineRenderer.SetPosition(0, gunTip.position);
+    lineRenderer.SetPosition(1, currentGrapplePosition);
+}
+
+
     
 }

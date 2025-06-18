@@ -5814,6 +5814,8 @@ MonoBehaviour:
   maxGrappleDistance: 25
   grappleDelayTime: 0.25
   OvershootYAxis: 1
+  predictionPoint: {fileID: 1227476691}
+  predictionSphereCastRadius: 1
   grapplingCd: 0
   grappleKey: 324
 --- !u!114 &638534822
