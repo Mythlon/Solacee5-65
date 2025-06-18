@@ -74,6 +74,14 @@ public class PlayerMovement : MonoBehaviour
         return rb.velocity;
     }
 
+    private bool isKnockedBack = false;
+    private float knockbackTimer = 0f;
+
+    public void ApplyMovementBlock(float duration)
+    {
+        isKnockedBack = true;
+        knockbackTimer = duration;
+    }
 
     public MovementState state;
     public enum MovementState
@@ -118,6 +126,17 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+
+        if (isKnockedBack)
+        {
+            knockbackTimer -= Time.deltaTime;
+            if (knockbackTimer <= 0f)
+            {
+                isKnockedBack = false;
+            }
+            return; // ← полностью выходим из апдейта
+        }     
+
         if (transform.position.y < -50f) // Or whatever your death zone is
         {
             FindObjectOfType<DeathScreen>().TriggerDeath();
@@ -156,7 +175,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        MovePlayer();
+        if (!isKnockedBack)
+            MovePlayer();
     }
     private void MyInput()
     {
@@ -383,7 +403,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void SpeedControl()
     {
-        if (activeGrapple) return;
+        if (activeGrapple || isKnockedBack) return;
 
         //limit slope speed
         if (OnSlope() && !exitingSlope)

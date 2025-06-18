@@ -15,7 +15,14 @@ public class KnockbackReceiver : MonoBehaviour
     public void ApplyKnockback(Vector3 direction, float force)
     {
         rb.velocity = Vector3.zero;
-        Vector3 knockDir = direction.normalized + Vector3.up * 0.1f; // ← добавим вертикальный толчок
-        rb.AddForce(knockDir.normalized * force * knockbackMultiplier, ForceMode.Impulse);
+        Vector3 knockDir = direction.normalized + Vector3.up * 0.3f;
+        rb.AddForce(knockDir * force * knockbackMultiplier, ForceMode.Impulse);
+
+        PlayerMovement movement = GetComponent<PlayerMovement>();
+        if (movement != null)
+        {
+            movement.ApplyMovementBlock(0.6f); // Примерно 0.6 секунд отключения управления
+        }
     }
+
 }
