@@ -1,14 +1,19 @@
 using UnityEngine;
+using UnityEngine.AI;
 
-public class ChasingEnemy : MonoBehaviour
+public class KickerEnemy : MonoBehaviour
 {
     public Transform player;
     public float detectionRange = 15f;
-    public float attackRange = 2.5f;
-    public float moveSpeed = 5f;
     public float knockbackForce = 8f;
 
+    private NavMeshAgent agent;
     private bool playerInRange;
+
+    void Start()
+    {
+        agent = GetComponent<NavMeshAgent>();
+    }
 
     void Update()
     {
@@ -16,50 +21,39 @@ public class ChasingEnemy : MonoBehaviour
 
         float distance = Vector3.Distance(transform.position, player.position);
 
-        if (distance <= detectionRange)
-        {
-            playerInRange = true;
-        }
-        else
-        {
-            playerInRange = false;
-        }
+        playerInRange = distance <= detectionRange;
 
         if (playerInRange)
         {
-            ChasePlayer();
+            agent.SetDestination(player.position);
+
+            // Атака, если рядом
+            if (distance <= agent.stoppingDistance + 0.5f)
+            {
+                TryAttack();
+            }
         }
-    }
-
-    void ChasePlayer()
-    {
-        Vector3 direction = (player.position - transform.position).normalized;
-        direction.y = 0; // чтобы не взлетал
-
-        transform.position += direction * moveSpeed * Time.deltaTime;
-        transform.rotation = Quaternion.LookRotation(direction);
-
-        float distance = Vector3.Distance(transform.position, player.position);
-        if (distance <= attackRange)
+        else
         {
-            TryAttack();
+            agent.ResetPath(); // не преследует
         }
     }
+
     void TryAttack()
     {
         KnockbackReceiver receiver = player.GetComponent<KnockbackReceiver>();
         if (receiver != null)
         {
             Vector3 knockDir = (player.position - transform.position);
-            knockDir.y = 0; // убрать вертикальный перекос
-            knockDir = knockDir.normalized;
+            knockDir.y = 0;
 
-                // Добавим чуть вверх, если нужно
-            knockDir += Vector3.up * 0.10f;
+            if (knockDir == Vector3.zero)
+                knockDir = transform.forward;
+
+            knockDir.Normalize();
+            knockDir += Vector3.up * 0.2f;
 
             receiver.ApplyKnockback(knockDir, knockbackForce);
         }
     }
-
-
 }

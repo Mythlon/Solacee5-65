@@ -21,7 +21,7 @@ public class KnockbackReceiver : MonoBehaviour
         PlayerMovement movement = GetComponent<PlayerMovement>();
         if (movement != null)
         {
-            movement.ApplyMovementBlock(0.6f); // Примерно 0.6 секунд отключения управления
+            movement.ApplyMovementBlock(0.9f); // Примерно 0.6 секунд отключения управления
         }
     }
 
