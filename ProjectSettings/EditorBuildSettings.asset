@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SolaceLevel.unity
     guid: 028eee2099daf4b4f9ae3c5573c3e216
+  - enabled: 1
+    path: Assets/Scenes/Menu.unity
+    guid: 850714ffec3b45e48bd8c01714ea9f36
   m_configObjects: {}
