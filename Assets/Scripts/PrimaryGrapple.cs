@@ -9,6 +9,10 @@ public class PrimaryGrapple : MonoBehaviour
     [Header("Input")]
     public KeyCode swingKey = KeyCode.Mouse0;
 
+    [Header("Grapple Attempts")]
+    public int maxAttemptsBeforeLanding = 1;
+    private int remainingAttempts;
+
     [Header("References")]
     public LineRenderer lr;
     public Transform gunTip, cam, player;
@@ -37,10 +41,24 @@ public class PrimaryGrapple : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(swingKey)) StartSwing();
+        if (Input.GetKeyDown(swingKey) && remainingAttempts > 0)
+        {
+            StartSwing();
+            remainingAttempts--;
+        }
+
+        if (pm != null && pm.IsGrounded())
+        {
+            remainingAttempts = maxAttemptsBeforeLanding;
+        }
         if (Input.GetKeyUp(swingKey)) StopSwing();
         CheckForSwingPoints();
         if (joint != null) OdmGearMovement();
+    }
+
+    private void Start()
+    {
+        remainingAttempts = maxAttemptsBeforeLanding;
     }
 
     void StartSwing()

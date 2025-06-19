@@ -28,6 +28,14 @@ public class PlayerMovement : MonoBehaviour
     public float speedIncreaseMultiplier;
     public float slopeIncreaseMultiplier;
 
+    public bool IsGrounded()
+    {
+    return Physics.Raycast(transform.position, Vector3.down, 1.2f, whatIsGround);
+    }
+
+public LayerMask groundLayer;
+
+
     [Header("Refs")]
     public Climbing climbingScript;
 

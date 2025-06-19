@@ -24,6 +24,11 @@ public class Grappling : MonoBehaviour
     public float OvershootYAxis;
     private Vector3 grapplePoint;
 
+    [Header("Grapple Attempts")]
+    public int maxAttemptsBeforeLanding = 1;
+    private int remainingAttempts;
+
+
     [Header("Prediction")]
     public Transform predictionPoint;
     public float predictionSphereCastRadius = 1.0f;
@@ -42,11 +47,21 @@ public class Grappling : MonoBehaviour
     {
         pm = GetComponent<PlayerMovement>();
         lineRenderer = GetComponent<LineRenderer>();
+        remainingAttempts = maxAttemptsBeforeLanding;
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(grappleKey)) StartGrapple();
+        if (Input.GetKeyDown(grappleKey) && remainingAttempts > 0)
+        {
+            StartGrapple();
+            remainingAttempts--;
+        }
+
+        if (pm != null && pm.IsGrounded())
+        {
+            remainingAttempts = maxAttemptsBeforeLanding;
+        }
         if (grapplingCdTimer > 0)
             grapplingCdTimer -= Time.deltaTime;
 

@@ -5582,6 +5582,9 @@ MonoBehaviour:
   speedText: {fileID: 393932582}
   speedIncreaseMultiplier: 3
   slopeIncreaseMultiplier: 3
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
   climbingScript: {fileID: 638534817}
   jumpForce: 12
   jumpCooldown: 0.25
@@ -5810,12 +5813,13 @@ MonoBehaviour:
   whatIsGrappable:
     serializedVersion: 2
     m_Bits: 64
-  lr: {fileID: 1965964847}
+  lr: {fileID: 638534824}
   maxGrappleDistance: 25
   grappleDelayTime: 0.25
   OvershootYAxis: 1
+  maxAttemptsBeforeLanding: 1
   predictionPoint: {fileID: 1227476691}
-  predictionSphereCastRadius: 1
+  predictionSphereCastRadius: 3
   grapplingCd: 0
   grappleKey: 324
 --- !u!114 &638534822
@@ -5978,7 +5982,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   swingKey: 323
-  lr: {fileID: 638534824}
+  maxAttemptsBeforeLanding: 3
+  lr: {fileID: 1965964847}
   gunTip: {fileID: 859178095}
   cam: {fileID: 1050141388}
   player: {fileID: 638534810}
@@ -6007,7 +6012,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cdec20f0aec3a84f8fca5932839b76b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  knockbackMultiplier: 10
+  knockbackMultiplier: 5
 --- !u!1 &642643680
 GameObject:
   m_ObjectHideFlags: 0
