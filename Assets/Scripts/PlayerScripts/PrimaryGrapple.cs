@@ -39,17 +39,21 @@ public class PrimaryGrapple : MonoBehaviour
     public float shrinkSpeed = 5f;
     public float minClamp = 2f;  
 
+    public GrappleUIController ui;
+
     private void Update()
     {
         if (Input.GetKeyDown(swingKey) && remainingAttempts > 0)
         {
             StartSwing();
             remainingAttempts--;
+            ui.UpdatePrimaryState(remainingAttempts);
         }
 
         if (pm != null && pm.IsGrounded())
         {
             remainingAttempts = maxAttemptsBeforeLanding;
+            ui.UpdatePrimaryState(remainingAttempts);
         }
         if (Input.GetKeyUp(swingKey)) StopSwing();
         CheckForSwingPoints();
@@ -59,6 +63,7 @@ public class PrimaryGrapple : MonoBehaviour
     private void Start()
     {
         remainingAttempts = maxAttemptsBeforeLanding;
+        ui.UpdatePrimaryState(remainingAttempts);
     }
 
     void StartSwing()

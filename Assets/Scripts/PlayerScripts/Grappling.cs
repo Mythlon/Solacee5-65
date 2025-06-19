@@ -16,6 +16,8 @@ public class Grappling : MonoBehaviour
 
     private LineRenderer lineRenderer;
 
+    public GrappleUIController ui;
+
 
 
     [Header("Grappling")]
@@ -48,6 +50,7 @@ public class Grappling : MonoBehaviour
         pm = GetComponent<PlayerMovement>();
         lineRenderer = GetComponent<LineRenderer>();
         remainingAttempts = maxAttemptsBeforeLanding;
+        ui.UpdateSecondaryState(remainingAttempts > 0);
     }
 
     private void Update()
@@ -56,11 +59,13 @@ public class Grappling : MonoBehaviour
         {
             StartGrapple();
             remainingAttempts--;
+            ui.UpdateSecondaryState(remainingAttempts > 0);
         }
 
         if (pm != null && pm.IsGrounded())
         {
             remainingAttempts = maxAttemptsBeforeLanding;
+            ui.UpdateSecondaryState(remainingAttempts > 0);
         }
         if (grapplingCdTimer > 0)
             grapplingCdTimer -= Time.deltaTime;
