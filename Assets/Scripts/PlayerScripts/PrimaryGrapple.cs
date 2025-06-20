@@ -93,6 +93,9 @@ public class PrimaryGrapple : MonoBehaviour
         wasGroundedLastFrame = groundedNow;
 
         DrawRope();
+
+        if (joint != null)
+            OdmGearMovement();
     }
 
     private bool CanSwing()
