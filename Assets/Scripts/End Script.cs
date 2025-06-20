@@ -32,6 +32,7 @@ public class AltarProximityEnd : MonoBehaviour
 
     void Update()
     {
+
         if (isEnding || player == null) return;
 
         Transform positionSource = player;
@@ -51,6 +52,7 @@ public class AltarProximityEnd : MonoBehaviour
             FindObjectOfType<AltarEndScreen>().TriggerEnd();
             isEnding = true;
         }
+        Debug.Log("Distance to altar: " + distance);
     }
 
     IEnumerator HeartbeatController()
