@@ -37,33 +37,76 @@ public class PrimaryGrapple : MonoBehaviour
 
     [Header("Rope Shortening")]
     public float shrinkSpeed = 5f;
-    public float minClamp = 2f;  
+    public float minClamp = 2f;
 
     public GrappleUIController ui;
 
+    private bool wasGroundedLastFrame;
+
+    [SerializeField] private float maxGrappleDistance = 40f;
+    
+    [SerializeField] private AudioClip grappleSound;
+    [SerializeField] private AudioClip noChargeSound;
+    private AudioSource audioSource;
+
+
+
+
+
     private void Update()
     {
-        if (Input.GetKeyDown(swingKey) && remainingAttempts > 0)
+        CheckForGrapplePoint(); // 🔴 Добавь в начало
+
+        if (Input.GetKeyDown(swingKey))
         {
-            StartSwing();
-            remainingAttempts--;
-            ui.UpdatePrimaryState(remainingAttempts);
+            if (remainingAttempts > 0)
+            {
+                if (!CanSwing()) return;
+
+                StartSwing();
+                remainingAttempts--;
+                ui.UpdatePrimaryState(remainingAttempts);
+
+                if (grappleSound != null)
+                    audioSource.PlayOneShot(grappleSound);
+            }
+            else
+            {
+                if (noChargeSound != null)
+                    audioSource.PlayOneShot(noChargeSound);
+            }
         }
 
-        if (pm != null && pm.IsGrounded())
+        if (Input.GetKeyUp(swingKey))
+        {
+            StopSwing();
+        }
+
+        bool groundedNow = pm != null && pm.IsGrounded();
+
+        if (groundedNow && !wasGroundedLastFrame)
         {
             remainingAttempts = maxAttemptsBeforeLanding;
             ui.UpdatePrimaryState(remainingAttempts);
         }
-        if (Input.GetKeyUp(swingKey)) StopSwing();
-        CheckForSwingPoints();
-        if (joint != null) OdmGearMovement();
+
+        wasGroundedLastFrame = groundedNow;
+
+        DrawRope();
     }
+
+    private bool CanSwing()
+    {
+        return predictionHit.point != Vector3.zero;
+    }
+
+
 
     private void Start()
     {
         remainingAttempts = maxAttemptsBeforeLanding;
         ui.UpdatePrimaryState(remainingAttempts);
+        audioSource = GetComponent<AudioSource>();
     }
 
     void StartSwing()
@@ -113,7 +156,7 @@ public class PrimaryGrapple : MonoBehaviour
         if (Input.GetKey(KeyCode.Space))
         {
             Vector3 directionToPoint = swingPoint - transform.position;
-    
+
             // Optional very small pull force to feel more natural
             rb.AddForce(directionToPoint.normalized * (forwardThrustForce * 0.1f) * Time.deltaTime);
 
@@ -192,7 +235,7 @@ public class PrimaryGrapple : MonoBehaviour
     {
         return swingPoint;
     }
-    
+
     private Vector3 currentGrapplePosition;
 
     private void DrawRope()
@@ -200,11 +243,30 @@ public class PrimaryGrapple : MonoBehaviour
         // if not grappling, don't draw rope
         if (!joint) return;
 
-        currentGrapplePosition = 
+        currentGrapplePosition =
             Vector3.Lerp(currentGrapplePosition, swingPoint, Time.deltaTime * 8f);
 
         lr.SetPosition(0, gunTip.position);
         lr.SetPosition(1, currentGrapplePosition);
+    }
+    
+    private void CheckForGrapplePoint()
+    {
+        RaycastHit hit;
+        bool hasHit = Physics.SphereCast(cam.position, predictionSphereCastRadius, cam.forward, out hit, maxGrappleDistance, whatIsGrappable);
+
+        predictionHit = hit;
+
+        if (hasHit)
+        {
+            predictionPoint.gameObject.SetActive(true);
+            predictionPoint.position = hit.point;
+        }
+        else
+        {
+            predictionPoint.gameObject.SetActive(false);
+            predictionPoint.position = cam.position + cam.forward * maxGrappleDistance;
+        }
     }
 
 }

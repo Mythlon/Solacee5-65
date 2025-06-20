@@ -18,6 +18,8 @@ public class Grappling : MonoBehaviour
 
     public GrappleUIController ui;
 
+    private bool wasGroundedLastFrame;
+
 
 
     [Header("Grappling")]
@@ -45,34 +47,58 @@ public class Grappling : MonoBehaviour
     public KeyCode grappleKey = KeyCode.Mouse1;
     private bool grappling;
 
+    [SerializeField] private AudioClip grappleSound;
+    [SerializeField] private AudioClip noChargeSound;
+    private AudioSource audioSource;
+
     private void Start()
     {
         pm = GetComponent<PlayerMovement>();
         lineRenderer = GetComponent<LineRenderer>();
         remainingAttempts = maxAttemptsBeforeLanding;
         ui.UpdateSecondaryState(remainingAttempts > 0);
+        audioSource = GetComponent<AudioSource>();
+
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(grappleKey) && remainingAttempts > 0)
+        if (Input.GetKeyDown(grappleKey))
         {
-            StartGrapple();
-            remainingAttempts--;
-            ui.UpdateSecondaryState(remainingAttempts > 0);
+            if (remainingAttempts > 0)
+            {
+                if (predictionHit.point == Vector3.zero) return;
+
+                StartGrapple();
+                remainingAttempts--;
+                ui.UpdateSecondaryState(remainingAttempts > 0);
+
+                if (grappleSound != null)
+                    audioSource.PlayOneShot(grappleSound);
+            }
+            else
+            {
+                if (noChargeSound != null)
+                    audioSource.PlayOneShot(noChargeSound);
+            }
         }
 
-        if (pm != null && pm.IsGrounded())
+        // Обновляем состояние земли
+        bool groundedNow = pm != null && pm.IsGrounded();
+
+        if (groundedNow && !wasGroundedLastFrame)
         {
             remainingAttempts = maxAttemptsBeforeLanding;
             ui.UpdateSecondaryState(remainingAttempts > 0);
         }
+
+        wasGroundedLastFrame = groundedNow;
+
         if (grapplingCdTimer > 0)
             grapplingCdTimer -= Time.deltaTime;
 
         CheckForGrapplePoint();
         UpdateGrappleRope();
-
     }
 
     private void LateUpdate()
@@ -86,28 +112,19 @@ public class Grappling : MonoBehaviour
     {
         if (grapplingCdTimer > 0) return;
 
-        //deactive active swinging
+        // НЕ начинаем, если нет цели
+        if (predictionHit.point == Vector3.zero)
+            return;
+
         GetComponent<PrimaryGrapple>().StopSwing();
 
-
-
         grappling = true;
-
         pm.freeze = true;
 
-        if (predictionHit.point != Vector3.zero)
-        {
-            grapplePoint = predictionHit.point;
-            currentGrapplePosition = gunTip.position;
+        grapplePoint = predictionHit.point;
+        currentGrapplePosition = gunTip.position;
 
-            Invoke(nameof(ExecuteGrapple), grappleDelayTime);
-        }
-        else
-        {
-            grapplePoint = cam.position + cam.forward * maxGrappleDistance;
-
-            Invoke(nameof(StopGrapple), grappleDelayTime);
-        }
+        Invoke(nameof(ExecuteGrapple), grappleDelayTime);
 
         lr.enabled = true;
         lr.SetPosition(1, grapplePoint);
